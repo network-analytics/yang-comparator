@@ -6,65 +6,20 @@ import org.yangcentral.yangkit.comparator.YangCompareResult;
 import org.dom4j.Document;
 import org.dom4j.DocumentException;
 import org.yangcentral.yangkit.common.api.validate.ValidatorResult;
+import org.yangcentral.yangkit.compiler.FileSource;
 import org.yangcentral.yangkit.compiler.Settings;
 import org.yangcentral.yangkit.compiler.YangCompiler;
 import org.yangcentral.yangkit.compiler.YangCompilerException;
 import org.yangcentral.yangkit.model.api.schema.YangSchemaContext;
-import org.yangcentral.yangkit.plugin.YangCompilerPlugin;
-import org.yangcentral.yangkit.plugin.YangCompilerPluginParameter;
+import org.yangcentral.yangkit.compiler.plugin.YangCompilerPlugin;
+import org.yangcentral.yangkit.compiler.plugin.YangCompilerPluginParameter;
 import org.yangcentral.yangkit.utils.file.FileUtil;
 import org.yangcentral.yangkit.utils.xml.XmlWriter;
 
-import java.io.File;
 import java.io.IOException;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
+import java.util.*;
 
 public class YangComparatorPlugin implements YangCompilerPlugin {
-    @Override
-    public YangCompilerPluginParameter getParameter(Properties properties, String name, String value) throws YangCompilerException {
-        if(!name.equals("old-yang")&& !name.equals("settings")
-                && !name.equals("compare-type") && !name.equals("rule")
-                && !name.equals("result")) {
-            throw new YangCompilerException("unrecognized parameter:"+ name);
-        }
-        YangCompilerPluginParameter yangCompilerPluginParameter = new YangCompilerPluginParameter() {
-            @Override
-            public String getName() {
-                return name;
-            }
-
-            @Override
-            public Object getValue() throws YangCompilerException {
-                if(name.equals("old-yang")|| name.equals("settings")
-                        || name.equals("rule") || name.equals("result")){
-                    Iterator<Map.Entry<Object,Object>> it = properties.entrySet().iterator();
-                    String formatStr = value;
-                    while (it.hasNext()){
-                        Map.Entry<Object,Object> entry = it.next();
-                        formatStr = formatStr.replaceAll("\\{"+entry.getKey()+"\\}", (String) entry.getValue());
-                    }
-                    return formatStr;
-                }
-
-                if(name.equals("compare-type")){
-                    if(value.equals("stmt")){
-                        return CompareType.STMT;
-                    } else if(value.equals("tree")){
-                        return CompareType.TREE;
-                    } else if(value.equals("compatible-check")){
-                        return CompareType.COMPATIBLE_CHECK;
-                    }
-                    throw new YangCompilerException("unrecognized value:"+value);
-                }
-                return null;
-            }
-
-        };
-        return yangCompilerPluginParameter;
-    }
 
     @Override
     public void run(YangSchemaContext yangSchemaContext, YangCompiler yangCompiler,List<YangCompilerPluginParameter> list) throws YangCompilerException {
@@ -76,7 +31,9 @@ public class YangComparatorPlugin implements YangCompilerPlugin {
             //System.out.println("para name="+parameter.getName() + " para value="+parameter.getValue());
             if(parameter.getName().equals("old-yang")){
                 oldYangPath = (String) parameter.getValue();
-                yangCompiler.setYang(new File(oldYangPath));
+                List<String> yangPaths = new ArrayList<>();
+                yangPaths.add(oldYangPath);
+                yangCompiler.getBuildOption().addSource(new FileSource(yangPaths));
             } else if(parameter.getName().equals("settings")){
                 String settingsPath = (String) parameter.getValue();
                 try {
