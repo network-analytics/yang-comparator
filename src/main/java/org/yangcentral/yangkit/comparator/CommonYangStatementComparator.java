@@ -1,9 +1,12 @@
 package org.yangcentral.yangkit.comparator;
 
 import org.yangcentral.yangkit.base.Cardinality;
+import org.yangcentral.yangkit.base.YangContext;
 import org.yangcentral.yangkit.base.YangElement;
 import org.yangcentral.yangkit.base.YangStatementDef;
+import org.yangcentral.yangkit.model.api.schema.YangSchemaContext;
 import org.yangcentral.yangkit.model.api.stmt.*;
+import org.yangcentral.yangkit.model.impl.schema.YangSchemaContextImpl;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -282,9 +285,15 @@ public class CommonYangStatementComparator<T extends YangStatement> extends Abst
             if(!left.getContext().getNamespace().equals(right.getContext().getNamespace())){
                 return false;
             }
-            if(!yangStatementIsEqual((YangStatement) leftSchemaNode.getClosestAncestorNode(),
-                    (YangStatement) rightSchemaNode.getClosestAncestorNode())){
+            if (leftSchemaNode.getClosestAncestorNode() instanceof YangSchemaContext && rightSchemaNode.getClosestAncestorNode() instanceof YangSchemaContext) {
+                return true;
+            } else if (leftSchemaNode.getClosestAncestorNode() instanceof YangSchemaContext || rightSchemaNode.getClosestAncestorNode() instanceof YangSchemaContext) {
                 return false;
+            } else {
+                if (!yangStatementIsEqual((YangStatement) leftSchemaNode.getClosestAncestorNode(),
+                        (YangStatement) rightSchemaNode.getClosestAncestorNode())) {
+                    return false;
+                }
             }
         }
         if((left instanceof IdentifierRef) && (right instanceof IdentifierRef)){
